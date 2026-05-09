@@ -11,6 +11,7 @@ const TIME_FMT = new Intl.DateTimeFormat("de-DE", {
   month: "2-digit",
   hour: "2-digit",
   minute: "2-digit",
+  timeZone: "Europe/Berlin",
 });
 
 export function GameCard({ game }: { game: GameWithDetails }) {

@@ -9,6 +9,7 @@ const TIME_FMT = new Intl.DateTimeFormat("de-DE", {
   month: "2-digit",
   hour: "2-digit",
   minute: "2-digit",
+  timeZone: "Europe/Berlin",
 });
 
 export default async function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
