@@ -69,20 +69,18 @@ export function SeriesCard({ series }: { series: SeriesWithDetails }) {
           </div>
         </div>
 
-        {!isFinished && (
+        {!isFinished && !myTip && (
           <div className="pt-1">
             <SeriesTipForm
               seriesId={series.id}
               teamA={{ id: series.team_a.id, abbreviation: series.team_a.abbreviation }}
               teamB={{ id: series.team_b.id, abbreviation: series.team_b.abbreviation }}
-              currentTipTeamId={myTip?.predicted_winner_team_id ?? null}
-              currentTipGames={myTip?.predicted_games ?? null}
             />
           </div>
         )}
 
         {(tippedTeam || isFinished) && (
-          <footer className="flex flex-col gap-1 border-t border-zinc-200 pt-2 text-sm dark:border-zinc-800">
+          <div className="flex flex-col gap-2 border-t border-zinc-200 pt-2 text-sm dark:border-zinc-800">
             {tippedTeam && (
               <span className="text-zinc-600 dark:text-zinc-400">
                 Dein Tipp: <b style={{ color: teamColor(tippedTeam.abbreviation) }}>{tippedTeam.abbreviation}</b> in {myTip!.predicted_games} Spielen
@@ -110,11 +108,11 @@ export function SeriesCard({ series }: { series: SeriesWithDetails }) {
             )}
             <Link
               href={`/series/${series.id}`}
-              className="self-start text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-300"
+              className="rounded-md border border-zinc-300 px-3 py-2 text-center text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
             >
-              Vergleich →
+              Tipps der anderen anzeigen →
             </Link>
-          </footer>
+          </div>
         )}
       </div>
     </article>

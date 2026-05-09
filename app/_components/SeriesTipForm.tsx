@@ -11,23 +11,14 @@ export function SeriesTipForm({
   seriesId,
   teamA,
   teamB,
-  currentTipTeamId,
-  currentTipGames,
 }: {
   seriesId: string;
   teamA: Team;
   teamB: Team;
-  currentTipTeamId: number | null;
-  currentTipGames: number | null;
 }) {
-  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(currentTipTeamId);
-  const [selectedGames, setSelectedGames] = useState<number>(currentTipGames ?? 6);
+  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
+  const [selectedGames, setSelectedGames] = useState<number>(6);
   const [isPending, startTransition] = useTransition();
-
-  const hasTip = currentTipTeamId !== null;
-  const hasChanged =
-    selectedTeamId !== null &&
-    (selectedTeamId !== currentTipTeamId || selectedGames !== currentTipGames);
 
   function submit() {
     if (!selectedTeamId) return;
@@ -72,15 +63,15 @@ export function SeriesTipForm({
         <button
           type="button"
           onClick={submit}
-          disabled={!hasChanged || isPending}
+          disabled={selectedTeamId === null || isPending}
           className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
         >
-          {isPending ? "Speichere..." : hasTip ? "Aktualisieren" : "Tipp bestaetigen"}
+          {isPending ? "Speichere..." : "Tipp abgeben (final)"}
         </button>
       </div>
-      {hasTip && !hasChanged && (
-        <p className="text-xs italic text-zinc-500">Tipp gespeichert. Klicke ein Team oder andere Spielzahl, um zu aendern.</p>
-      )}
+      <p className="text-xs italic text-zinc-500">
+        Hinweis: Tipps koennen nach Abgabe nicht mehr geaendert werden.
+      </p>
     </div>
   );
 }

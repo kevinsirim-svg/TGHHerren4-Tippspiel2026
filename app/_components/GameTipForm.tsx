@@ -11,17 +11,13 @@ export function GameTipForm({
   gameId,
   awayTeam,
   homeTeam,
-  currentTipTeamId,
 }: {
   gameId: string;
   awayTeam: Team;
   homeTeam: Team;
-  currentTipTeamId: number | null;
 }) {
-  const [selectedId, setSelectedId] = useState<number | null>(currentTipTeamId);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  const hasChanged = selectedId !== null && selectedId !== currentTipTeamId;
 
   function submit() {
     if (!selectedId) return;
@@ -47,25 +43,19 @@ export function GameTipForm({
           onClick={() => setSelectedId(homeTeam.id)}
         />
       </div>
-      {hasChanged && (
+      {selectedId !== null && (
         <button
           type="button"
           onClick={submit}
           disabled={isPending}
           className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
         >
-          {isPending
-            ? "Speichere..."
-            : currentTipTeamId
-              ? "Tipp aktualisieren"
-              : "Tipp bestaetigen"}
+          {isPending ? "Speichere..." : "Tipp abgeben (final)"}
         </button>
       )}
-      {currentTipTeamId !== null && selectedId === currentTipTeamId && (
-        <p className="text-xs italic text-zinc-500">
-          Tipp gespeichert. Klick auf das andere Team, um zu aendern.
-        </p>
-      )}
+      <p className="text-xs italic text-zinc-500">
+        Hinweis: Tipps koennen nach Abgabe nicht mehr geaendert werden.
+      </p>
     </div>
   );
 }

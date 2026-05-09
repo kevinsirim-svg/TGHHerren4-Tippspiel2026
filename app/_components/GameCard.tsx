@@ -67,17 +67,16 @@ export function GameCard({ game }: { game: GameWithDetails }) {
           />
         </div>
 
-        {!isFinal && !tipOffPassed && (
+        {!isFinal && !tipOffPassed && !myTip && (
           <GameTipForm
             gameId={game.id}
             awayTeam={{ id: game.away_team.id, abbreviation: game.away_team.abbreviation }}
             homeTeam={{ id: game.home_team.id, abbreviation: game.home_team.abbreviation }}
-            currentTipTeamId={myTip?.predicted_winner_team_id ?? null}
           />
         )}
 
         {(tipOffPassed || tipped) && (
-          <footer className="flex items-center justify-between text-sm">
+          <div className="flex flex-col gap-2 text-sm">
             <span className="text-zinc-600 dark:text-zinc-400">
               {tipped ? (
                 <>
@@ -94,19 +93,17 @@ export function GameCard({ game }: { game: GameWithDetails }) {
                     </span>
                   )}
                 </>
-              ) : tipOffPassed ? (
+              ) : (
                 <span className="italic">Kein Tipp abgegeben</span>
-              ) : null}
+              )}
             </span>
-            {(tipped || tipOffPassed) && (
-              <Link
-                href={`/game/${game.id}`}
-                className="text-zinc-700 underline-offset-4 hover:underline dark:text-zinc-300"
-              >
-                Vergleich →
-              </Link>
-            )}
-          </footer>
+            <Link
+              href={`/game/${game.id}`}
+              className="rounded-md border border-zinc-300 px-3 py-2 text-center text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            >
+              Tipps der anderen anzeigen →
+            </Link>
+          </div>
         )}
       </div>
     </article>
