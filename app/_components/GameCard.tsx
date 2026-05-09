@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { submitGameTip } from "@/app/_actions/tips";
 import type { GameWithDetails } from "@/lib/tips/queries";
 import { roundLabel } from "@/lib/tips/queries";
 import { teamColor } from "@/lib/teams/info";
 import { TeamLogo } from "./TeamLogo";
+import { GameTipForm } from "./GameTipForm";
 
 const TIME_FMT = new Intl.DateTimeFormat("de-DE", {
   weekday: "short",
@@ -68,19 +68,12 @@ export function GameCard({ game }: { game: GameWithDetails }) {
         </div>
 
         {!isFinal && !tipOffPassed && (
-          <form action={submitGameTip} className="flex gap-2">
-            <input type="hidden" name="game_id" value={game.id} />
-            <TipButton
-              teamId={game.away_team.id}
-              abbreviation={game.away_team.abbreviation}
-              selected={myTip?.predicted_winner_team_id === game.away_team.id}
-            />
-            <TipButton
-              teamId={game.home_team.id}
-              abbreviation={game.home_team.abbreviation}
-              selected={myTip?.predicted_winner_team_id === game.home_team.id}
-            />
-          </form>
+          <GameTipForm
+            gameId={game.id}
+            awayTeam={{ id: game.away_team.id, abbreviation: game.away_team.abbreviation }}
+            homeTeam={{ id: game.home_team.id, abbreviation: game.home_team.abbreviation }}
+            currentTipTeamId={myTip?.predicted_winner_team_id ?? null}
+          />
         )}
 
         {(tipOffPassed || tipped) && (
@@ -148,29 +141,3 @@ function TeamBlock({
   );
 }
 
-function TipButton({
-  teamId,
-  abbreviation,
-  selected,
-}: {
-  teamId: number;
-  abbreviation: string;
-  selected: boolean;
-}) {
-  const color = teamColor(abbreviation);
-  const style = selected
-    ? { backgroundColor: color, borderColor: color, color: "#fff" }
-    : { borderColor: color, color };
-  return (
-    <button
-      type="submit"
-      name="predicted_winner_team_id"
-      value={teamId}
-      style={style}
-      className="flex flex-1 items-center justify-center gap-2 rounded-md border-2 bg-white px-3 py-2 text-sm font-bold transition-colors hover:opacity-90 dark:bg-zinc-950"
-    >
-      <TeamLogo abbreviation={abbreviation} size={22} />
-      {selected ? "✓ " : ""}{abbreviation}
-    </button>
-  );
-}

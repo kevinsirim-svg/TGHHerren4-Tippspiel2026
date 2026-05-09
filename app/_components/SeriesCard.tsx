@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { submitSeriesTip } from "@/app/_actions/tips";
 import type { SeriesWithDetails } from "@/lib/tips/queries";
 import { roundLabel } from "@/lib/tips/queries";
 import { teamColor } from "@/lib/teams/info";
 import { TeamLogo } from "./TeamLogo";
+import { SeriesTipForm } from "./SeriesTipForm";
 
 export function SeriesCard({ series }: { series: SeriesWithDetails }) {
   const isFinished = series.status === "finished";
@@ -70,44 +70,15 @@ export function SeriesCard({ series }: { series: SeriesWithDetails }) {
         </div>
 
         {!isFinished && (
-          <form action={submitSeriesTip} className="flex flex-col gap-2 pt-1">
-            <input type="hidden" name="series_id" value={series.id} />
-            <div className="flex gap-2">
-              <TeamRadio
-                teamId={series.team_a.id}
-                abbreviation={series.team_a.abbreviation}
-                selected={myTip?.predicted_winner_team_id === series.team_a.id}
-              />
-              <TeamRadio
-                teamId={series.team_b.id}
-                abbreviation={series.team_b.abbreviation}
-                selected={myTip?.predicted_winner_team_id === series.team_b.id}
-              />
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <label className="flex flex-1 items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                In wie vielen Spielen?
-                <select
-                  name="predicted_games"
-                  defaultValue={myTip?.predicted_games ?? 6}
-                  required
-                  className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-                >
-                  {[4, 5, 6, 7].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="submit"
-                className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-              >
-                {myTip ? "Aktualisieren" : "Tipp abgeben"}
-              </button>
-            </div>
-          </form>
+          <div className="pt-1">
+            <SeriesTipForm
+              seriesId={series.id}
+              teamA={{ id: series.team_a.id, abbreviation: series.team_a.abbreviation }}
+              teamB={{ id: series.team_b.id, abbreviation: series.team_b.abbreviation }}
+              currentTipTeamId={myTip?.predicted_winner_team_id ?? null}
+              currentTipGames={myTip?.predicted_games ?? null}
+            />
+          </div>
         )}
 
         {(tippedTeam || isFinished) && (
@@ -150,27 +121,3 @@ export function SeriesCard({ series }: { series: SeriesWithDetails }) {
   );
 }
 
-function TeamRadio({
-  teamId,
-  abbreviation,
-  selected,
-}: {
-  teamId: number;
-  abbreviation: string;
-  selected: boolean;
-}) {
-  const color = teamColor(abbreviation);
-  const style = selected
-    ? { backgroundColor: color, borderColor: color, color: "#fff" }
-    : { borderColor: color, color };
-  return (
-    <label
-      className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border-2 bg-white px-3 py-2 text-sm font-bold transition-colors hover:opacity-90 dark:bg-zinc-950"
-      style={style}
-    >
-      <input type="radio" name="predicted_winner_team_id" value={teamId} defaultChecked={selected} className="sr-only" required />
-      <TeamLogo abbreviation={abbreviation} size={22} />
-      {selected ? "✓ " : ""}{abbreviation}
-    </label>
-  );
-}
