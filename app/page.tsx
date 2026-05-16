@@ -16,6 +16,13 @@ export default async function Home() {
   const openSeries = series.filter((s) => s.status !== "finished");
   const finishedSeries = series.filter((s) => s.status === "finished");
 
+  // Spiele aufteilen: kommend (noch tippbar) zuerst, vergangen (gespielt) weiter unten
+  const now = new Date();
+  const upcomingGames = games.filter((g) => g.status !== "final" && new Date(g.tip_off) > now);
+  const pastGames = games
+    .filter((g) => g.status === "final" || new Date(g.tip_off) <= now)
+    .sort((a, b) => new Date(b.tip_off).getTime() - new Date(a.tip_off).getTime());
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-6 sm:px-6">
       <header className="flex items-center justify-between">
@@ -55,17 +62,28 @@ export default async function Home() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Spiele</h2>
-        {games.length === 0 ? (
-          <p className="text-sm text-zinc-500">Keine Spiele in diesem Zeitraum.</p>
+        <h2 className="mb-3 text-lg font-semibold">Kommende Spiele</h2>
+        {upcomingGames.length === 0 ? (
+          <p className="text-sm text-zinc-500">Keine kommenden Spiele in den naechsten Tagen.</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {games.map((g) => (
+            {upcomingGames.map((g) => (
               <GameCard key={g.id} game={g} />
             ))}
           </div>
         )}
       </section>
+
+      {pastGames.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold">Vergangene Spiele</h2>
+          <div className="flex flex-col gap-3">
+            {pastGames.map((g) => (
+              <GameCard key={g.id} game={g} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {finishedSeries.length > 0 && (
         <section>
