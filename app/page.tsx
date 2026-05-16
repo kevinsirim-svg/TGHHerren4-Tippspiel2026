@@ -50,6 +50,12 @@ export default async function Home() {
         </div>
         <div className="flex gap-2">
           <Link
+            href="/welcome?from=rules"
+            className="rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-200 hover:border-orange-500/60 hover:bg-zinc-800"
+          >
+            Regeln
+          </Link>
+          <Link
             href="/leaderboard"
             className="rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-200 hover:border-orange-500/60 hover:bg-zinc-800"
           >
