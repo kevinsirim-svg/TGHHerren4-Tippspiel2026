@@ -5,6 +5,9 @@ import { getActiveSeries, getUpcomingAndRecentGames } from "@/lib/tips/queries";
 import { GameCard } from "./_components/GameCard";
 import { SeriesCard } from "./_components/SeriesCard";
 
+// Tipps muessen sofort nach Abgabe sichtbar werden -> kein Caching dieser Page.
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const { user, profile } = await requireUser();
   const [series, games] = await Promise.all([getActiveSeries(user.id), getUpcomingAndRecentGames(user.id)]);

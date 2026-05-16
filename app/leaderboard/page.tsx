@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/supabase/auth";
 
+export const dynamic = "force-dynamic";
+
 export default async function LeaderboardPage() {
   const { user, supabase } = await requireUser();
 

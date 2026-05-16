@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/supabase/auth";
 import { getTeamsMap, roundLabel } from "@/lib/tips/queries";
 
+export const dynamic = "force-dynamic";
+
 export default async function SeriesDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { user, supabase } = await requireUser();
