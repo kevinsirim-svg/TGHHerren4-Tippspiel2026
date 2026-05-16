@@ -143,3 +143,51 @@ export function roundLabel(round: number | null, conference: SeriesConference | 
   if (round === 3) return `${confLabel} Conf Finals`.trim();
   return "";
 }
+
+/**
+ * Stand des Champion-Tipps fuer einen User.
+ * - eligibleTeams: alle Teams, die in den Conf-Finals stehen (round=3).
+ *                  Card erst zeigen, wenn beide Conf Finals Series in DB sind (= 4 Teams).
+ * - locked: true sobald irgendein R3-Spiel angepfiffen wurde.
+ * - myTip: eigener Tipp (falls vorhanden).
+ */
+export async function getChampionTipState(userId: string): Promise<{
+  eligibleTeams: Team[];
+  locked: boolean;
+  myTip: { predicted_champion_team_id: number; points_awarded: number | null } | null;
+}> {
+  const supabase = await createClient();
+  const teams = await getTeamsMap();
+
+  // R3 (Conf-Finals) Series finden
+  const { data: cfSeries } = await supabase
+    .from("series")
+    .select("team_a_id, team_b_id")
+    .eq("round", 3);
+
+  const eligibleIds = new Set<number>();
+  for (const s of cfSeries ?? []) {
+    eligibleIds.add(s.team_a_id);
+    eligibleIds.add(s.team_b_id);
+  }
+  const eligibleTeams = Array.from(eligibleIds)
+    .map((id) => teams.get(id))
+    .filter((t): t is Team => !!t);
+
+  // Lock-Status: irgendein R3-Game bereits angepfiffen?
+  const { data: lockedRow } = await supabase.rpc("champion_tipping_locked");
+  const locked = !!lockedRow;
+
+  // Eigener Tipp
+  const { data: myTip } = await supabase
+    .from("champion_tips")
+    .select("predicted_champion_team_id, points_awarded")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return {
+    eligibleTeams,
+    locked,
+    myTip: myTip ?? null,
+  };
+}

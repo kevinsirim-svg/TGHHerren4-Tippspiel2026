@@ -63,3 +63,14 @@ export type SeriesTip = {
   created_at: string;
   updated_at: string;
 };
+
+export type ChampionTip = {
+  user_id: string;
+  predicted_champion_team_id: number;
+  points_awarded: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Punkte fuer korrekten Champion-Tipp. */
+export const CHAMPION_POINTS = 10;

@@ -1,16 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+const CHAMPION_POINTS = 10;
+
 /**
  * Punkteregeln:
- *   game_tips    : 1 Pkt wenn predicted_winner_team_id == game.winner_team_id, sonst 0.
- *                  Nur fuer games mit status='final'.
- *   series_tips  : 3 Pkt wenn winner stimmt, +2 Bonus wenn games_played stimmt, sonst 0.
- *                  Nur fuer series mit status='finished'.
+ *   game_tips     : 1 Pkt wenn predicted_winner_team_id == game.winner_team_id, sonst 0.
+ *                   Nur fuer games mit status='final'.
+ *   series_tips   : 3 Pkt wenn winner stimmt, +2 Bonus wenn games_played stimmt, sonst 0.
+ *                   Nur fuer series mit status='finished'.
+ *   champion_tips : 10 Pkt wenn predicted_champion == NBA-Finals-Sieger, sonst 0.
+ *                   Nur wenn NBA Finals (round=4) status='finished'.
  * Tipps zu noch nicht abgeschlossenen Spielen/Serien -> points_awarded=null.
  */
 export async function recalcAllPoints(supabase: SupabaseClient) {
   await recalcGameTips(supabase);
   await recalcSeriesTips(supabase);
+  await recalcChampionTips(supabase);
 }
 
 async function recalcGameTips(supabase: SupabaseClient) {
@@ -45,6 +50,38 @@ async function recalcGameTips(supabase: SupabaseClient) {
         .eq("user_id", t.user_id)
         .eq("game_id", g.id);
     }
+  }
+}
+
+async function recalcChampionTips(supabase: SupabaseClient) {
+  // NBA Finals (round=4) holen
+  const { data: finals } = await supabase
+    .from("series")
+    .select("winner_team_id, status")
+    .eq("round", 4)
+    .maybeSingle();
+
+  if (!finals || finals.status !== "finished" || !finals.winner_team_id) {
+    // Solange Finals nicht entschieden sind, alle points_awarded auf null setzen.
+    await supabase
+      .from("champion_tips")
+      .update({ points_awarded: null })
+      .not("points_awarded", "is", null);
+    return;
+  }
+
+  const { data: tips } = await supabase
+    .from("champion_tips")
+    .select("user_id, predicted_champion_team_id, points_awarded");
+  if (!tips) return;
+
+  for (const t of tips) {
+    const points = t.predicted_champion_team_id === finals.winner_team_id ? CHAMPION_POINTS : 0;
+    if (t.points_awarded === points) continue;
+    await supabase
+      .from("champion_tips")
+      .update({ points_awarded: points })
+      .eq("user_id", t.user_id);
   }
 }
 

@@ -1,16 +1,31 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/supabase/auth";
 import { signOut } from "./login/actions";
-import { getActiveSeries, getUpcomingAndRecentGames } from "@/lib/tips/queries";
+import { getActiveSeries, getChampionTipState, getUpcomingAndRecentGames } from "@/lib/tips/queries";
 import { GameCard } from "./_components/GameCard";
 import { SeriesCard } from "./_components/SeriesCard";
+import { ChampionTipCard } from "./_components/ChampionTipCard";
 
 // Tipps muessen sofort nach Abgabe sichtbar werden -> kein Caching dieser Page.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const { user, profile } = await requireUser();
-  const [series, games] = await Promise.all([getActiveSeries(user.id), getUpcomingAndRecentGames(user.id)]);
+  const [series, games, championState] = await Promise.all([
+    getActiveSeries(user.id),
+    getUpcomingAndRecentGames(user.id),
+    getChampionTipState(user.id),
+  ]);
+
+  // Falls NBA Finals beendet - echten Champion fuer Anzeige bestimmen.
+  const finalsSeries = series.find((s) => s.round === 4 && s.status === "finished");
+  const actualChampion = finalsSeries
+    ? finalsSeries.winner_team_id === finalsSeries.team_a.id
+      ? finalsSeries.team_a
+      : finalsSeries.winner_team_id === finalsSeries.team_b.id
+        ? finalsSeries.team_b
+        : null
+    : null;
 
   // Aktive Serien (laufend oder bevorstehend) zuerst, abgeschlossene weiter unten
   const openSeries = series.filter((s) => s.status !== "finished");
@@ -50,6 +65,13 @@ export default async function Home() {
           </form>
         </div>
       </header>
+
+      <ChampionTipCard
+        eligibleTeams={championState.eligibleTeams}
+        locked={championState.locked}
+        myTip={championState.myTip}
+        actualChampion={actualChampion}
+      />
 
       <section>
         <h2 className="nba-section-title mb-4">Serien</h2>

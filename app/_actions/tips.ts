@@ -3,6 +3,36 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+export async function submitChampionTip(formData: FormData): Promise<void> {
+  const teamId = Number(formData.get("predicted_champion_team_id"));
+  if (!Number.isFinite(teamId)) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  // Tipps sind final - existing nicht ueberschreiben.
+  const { data: existing } = await supabase
+    .from("champion_tips")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (existing) return;
+
+  // Server-Lock: Conf Finals duerfen noch nicht angepfiffen sein.
+  const { data: locked } = await supabase.rpc("champion_tipping_locked");
+  if (locked) return;
+
+  await supabase.from("champion_tips").insert({
+    user_id: user.id,
+    predicted_champion_team_id: teamId,
+  });
+
+  revalidatePath("/");
+}
+
 export async function submitGameTip(formData: FormData): Promise<void> {
   const gameId = String(formData.get("game_id") ?? "");
   const predictedWinnerTeamId = Number(formData.get("predicted_winner_team_id"));
