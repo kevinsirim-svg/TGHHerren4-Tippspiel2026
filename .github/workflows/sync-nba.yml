@@ -1,0 +1,33 @@
+name: NBA Sync
+
+on:
+  schedule:
+    # Alle 15 Minuten - Cron Zeit ist UTC.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: # manueller Trigger aus GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger sync endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SYNC_URL: ${{ vars.SYNC_URL }}
+        run: |
+          if [ -z "$CRON_SECRET" ] || [ -z "$SYNC_URL" ]; then
+            echo "Missing CRON_SECRET or SYNC_URL"
+            exit 1
+          fi
+          echo "Calling $SYNC_URL/api/sync-nba"
+          response=$(curl -sS -w "\n%{http_code}" -m 120 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$SYNC_URL/api/sync-nba")
+          body=$(echo "$response" | head -n -1)
+          code=$(echo "$response" | tail -n 1)
+          echo "HTTP $code"
+          echo "$body"
+          if [ "$code" != "200" ]; then
+            exit 1
+          fi

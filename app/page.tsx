@@ -5,6 +5,7 @@ import { getActiveSeries, getChampionTipState, getUpcomingAndRecentGames } from 
 import { GameCard } from "./_components/GameCard";
 import { SeriesCard } from "./_components/SeriesCard";
 import { ChampionTipCard } from "./_components/ChampionTipCard";
+import { SyncButton } from "./_components/SyncButton";
 
 // Tipps muessen sofort nach Abgabe sichtbar werden -> kein Caching dieser Page.
 export const dynamic = "force-dynamic";
@@ -48,7 +49,8 @@ export default async function Home() {
           </h1>
           <p className="text-xs uppercase tracking-widest text-zinc-500">Hi {profile?.display_name ?? ""}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
+          <SyncButton />
           <Link
             href="/welcome?from=rules"
             className="rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-200 hover:border-orange-500/60 hover:bg-zinc-800"
