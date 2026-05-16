@@ -50,21 +50,45 @@ function formatDateForEspn(d: Date): string {
   return `${y}${m}${day}`;
 }
 
+const CHUNK_DAYS = 14;
+
 /**
  * Holt alle Playoff-Events (seasontype=3) im angegebenen Datumsbereich.
- * ESPN unterstuetzt YYYYMMDD-YYYYMMDD als Range.
+ * ESPN ignoriert den seasontype-Filter bei grossen Ranges (>~30 Tage) und
+ * liefert dann regulaere Saison-Games. Wir teilen den Range deshalb in
+ * Chunks von 14 Tagen und filtern zur Sicherheit lokal auf season.type=3.
  */
 export async function fetchPlayoffScoreboardRange(start: Date, end: Date): Promise<EspnEvent[]> {
-  const range = `${formatDateForEspn(start)}-${formatDateForEspn(end)}`;
-  const url = `${ESPN_BASE}/scoreboard?dates=${range}&seasontype=3&limit=200`;
+  const all: EspnEvent[] = [];
+  const cursor = new Date(start);
 
-  const res = await fetch(url, {
-    cache: "no-store",
-    headers: { "User-Agent": "nba-tipspiel/1.0" },
-  });
-  if (!res.ok) {
-    throw new Error(`ESPN API error ${res.status}: ${res.statusText}`);
+  while (cursor <= end) {
+    const chunkEnd = new Date(cursor);
+    chunkEnd.setUTCDate(chunkEnd.getUTCDate() + CHUNK_DAYS - 1);
+    if (chunkEnd > end) chunkEnd.setTime(end.getTime());
+
+    const range = `${formatDateForEspn(cursor)}-${formatDateForEspn(chunkEnd)}`;
+    const url = `${ESPN_BASE}/scoreboard?dates=${range}&seasontype=3&limit=200`;
+
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: { "User-Agent": "nba-tipspiel/1.0" },
+    });
+    if (res.ok) {
+      const data = (await res.json()) as EspnScoreboard;
+      for (const ev of data.events ?? []) {
+        if (ev.season?.type === 3) all.push(ev);
+      }
+    }
+
+    cursor.setUTCDate(cursor.getUTCDate() + CHUNK_DAYS);
   }
-  const data = (await res.json()) as EspnScoreboard;
-  return data.events ?? [];
+
+  // Dedupe nach id (sollte zwischen Chunks nicht ueberlappen, aber safety).
+  const seen = new Set<string>();
+  return all.filter((ev) => {
+    if (seen.has(ev.id)) return false;
+    seen.add(ev.id);
+    return true;
+  });
 }
