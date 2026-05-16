@@ -13,7 +13,10 @@ export type SyncStats = {
   errors: string[];
 };
 
-const PLAYOFFS_LOOKBACK_DAYS = 14;
+// Deckt eine komplette Playoff-Saison ab (mid-April bis Mitte Juni).
+// Wichtig, damit Spiele aus frueheren Runden noch als "final" upserted
+// werden und die Series-Auswertung sie sieht.
+const PLAYOFFS_LOOKBACK_DAYS = 60;
 const PLAYOFFS_LOOKAHEAD_DAYS = 60;
 
 export async function syncNBA(): Promise<SyncStats> {
