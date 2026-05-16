@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { submitGameTip } from "@/app/_actions/tips";
 import { TeamLogo } from "./TeamLogo";
 import { teamColor } from "@/lib/teams/info";
@@ -18,6 +19,7 @@ export function GameTipForm({
 }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   function submit() {
     if (!selectedId) return;
@@ -26,6 +28,8 @@ export function GameTipForm({
     formData.set("predicted_winner_team_id", String(selectedId));
     startTransition(async () => {
       await submitGameTip(formData);
+      // Erzwingt Re-Fetch der Server Component (myTip wird dann gesetzt -> Form verschwindet).
+      router.refresh();
     });
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { submitSeriesTip } from "@/app/_actions/tips";
 import { TeamLogo } from "./TeamLogo";
 import { teamColor } from "@/lib/teams/info";
@@ -19,6 +20,7 @@ export function SeriesTipForm({
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [selectedGames, setSelectedGames] = useState<number>(6);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   function submit() {
     if (!selectedTeamId) return;
@@ -28,6 +30,7 @@ export function SeriesTipForm({
     formData.set("predicted_games", String(selectedGames));
     startTransition(async () => {
       await submitSeriesTip(formData);
+      router.refresh();
     });
   }
 
