@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* NBA 2K inspired dark theme - immer dunkel, unabhaengig von OS preference. */
+  --background: #0a0e1a;
+  --background-card: #131a2b;
+  --background-card-elevated: #1a2238;
+  --foreground: #f5f5f7;
+  --foreground-muted: #8b94a8;
+  --accent: #f97316; /* basketball orange */
+  --accent-hot: #ef4444; /* hot/live red */
+  --border-subtle: #1f2940;
 }
 
 @theme inline {
@@ -12,15 +19,104 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background:
+    radial-gradient(ellipse at top, rgba(249, 115, 22, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+    var(--background);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
 }
 
-body {
-  background: var(--background);
+/* NBA-Style Section-Header: orangener Akzentbalken links */
+.nba-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+.nba-section-title::before {
+  content: "";
+  display: block;
+  width: 4px;
+  height: 1.2em;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hot) 100%);
+  border-radius: 2px;
+}
+
+/* NBA-Card-Style: dunkel mit subtle border */
+.nba-card {
+  background: var(--background-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.nba-card-upcoming {
+  /* Live/tippbar: leichter Glow */
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.15), 0 8px 24px -8px rgba(249, 115, 22, 0.15);
+}
+
+.nba-card-upcoming:hover {
+  border-color: rgba(249, 115, 22, 0.4);
+  transform: translateY(-1px);
+}
+
+.nba-card-past {
+  /* Vergangen: gedimmt */
+  opacity: 0.72;
+  background: var(--background);
+}
+
+.nba-card-past:hover {
+  opacity: 0.95;
+}
+
+.nba-badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--accent-hot);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.nba-badge-live::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  background: white;
+  border-radius: 9999px;
+  animation: pulse 1.4s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.nba-badge-final {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--foreground-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }

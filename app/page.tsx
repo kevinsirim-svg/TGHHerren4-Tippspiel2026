@@ -25,22 +25,25 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-6 sm:px-6">
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between border-b border-zinc-800 pb-4">
         <div>
-          <h1 className="text-xl font-bold">NBA Tippspiel</h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Hi {profile?.display_name ?? ""}!</p>
+          <h1 className="text-2xl font-black uppercase tracking-tight">
+            <span className="bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent">NBA</span>
+            <span className="text-white"> Tippspiel</span>
+          </h1>
+          <p className="text-xs uppercase tracking-widest text-zinc-500">Hi {profile?.display_name ?? ""}</p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/leaderboard"
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            className="rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-200 hover:border-orange-500/60 hover:bg-zinc-800"
           >
             Tabelle
           </Link>
           <form action={signOut}>
             <button
               type="submit"
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+              className="rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-200 hover:border-orange-500/60 hover:bg-zinc-800"
             >
               Logout
             </button>
@@ -49,7 +52,7 @@ export default async function Home() {
       </header>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Serien</h2>
+        <h2 className="nba-section-title mb-4">Serien</h2>
         {openSeries.length === 0 ? (
           <p className="text-sm text-zinc-500">Keine offenen Serien.</p>
         ) : (
@@ -62,7 +65,7 @@ export default async function Home() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Kommende Spiele</h2>
+        <h2 className="nba-section-title mb-4">Kommende Spiele</h2>
         {upcomingGames.length === 0 ? (
           <p className="text-sm text-zinc-500">Keine kommenden Spiele in den naechsten Tagen.</p>
         ) : (
@@ -76,7 +79,7 @@ export default async function Home() {
 
       {pastGames.length > 0 && (
         <section>
-          <h2 className="mb-3 text-lg font-semibold">Vergangene Spiele</h2>
+          <h2 className="nba-section-title mb-4">Vergangene Spiele</h2>
           <div className="flex flex-col gap-3">
             {pastGames.map((g) => (
               <GameCard key={g.id} game={g} />
@@ -87,7 +90,7 @@ export default async function Home() {
 
       {finishedSeries.length > 0 && (
         <section>
-          <h2 className="mb-3 text-lg font-semibold">Abgeschlossene Serien</h2>
+          <h2 className="nba-section-title mb-4">Abgeschlossene Serien</h2>
           <div className="flex flex-col gap-3">
             {finishedSeries.map((s) => (
               <SeriesCard key={s.id} series={s} />

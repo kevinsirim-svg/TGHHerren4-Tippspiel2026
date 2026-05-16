@@ -17,6 +17,8 @@ const TIME_FMT = new Intl.DateTimeFormat("de-DE", {
 export function GameCard({ game }: { game: GameWithDetails }) {
   const tipOffPassed = new Date(game.tip_off) <= new Date();
   const isFinal = game.status === "final";
+  const isLive = game.status === "live";
+  const isPast = isFinal || tipOffPassed;
   const myTip = game.my_tip;
 
   const tipped =
@@ -28,28 +30,25 @@ export function GameCard({ game }: { game: GameWithDetails }) {
   const correct =
     isFinal && myTip && game.winner_team_id === myTip.predicted_winner_team_id;
 
-  const accentColor = tipped ? teamColor(tipped.abbreviation) : "#e4e4e7";
+  const accentColor = tipped ? teamColor(tipped.abbreviation) : "#475569";
 
   return (
     <article
-      className="flex flex-col gap-3 overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+      className={`nba-card flex flex-col gap-3 ${isPast ? "nba-card-past" : "nba-card-upcoming"}`}
       style={{ borderLeftWidth: 4, borderLeftColor: accentColor }}
     >
       <div className="flex flex-col gap-3 px-4 py-3">
         <header className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-orange-400/80">
               {roundLabel(game.series_round, game.series_conference)}
             </p>
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            <p className="text-sm text-zinc-400">
               {TIME_FMT.format(new Date(game.tip_off))} Uhr
             </p>
           </div>
-          {isFinal && (
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium dark:bg-zinc-800">
-              Endstand
-            </span>
-          )}
+          {isLive && <span className="nba-badge-live">Live</span>}
+          {isFinal && <span className="nba-badge-final">Final</span>}
         </header>
 
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
@@ -77,7 +76,7 @@ export function GameCard({ game }: { game: GameWithDetails }) {
 
         {(tipOffPassed || tipped) && (
           <div className="flex flex-col gap-2 text-sm">
-            <span className="text-zinc-600 dark:text-zinc-400">
+            <span className="text-zinc-400">
               {tipped ? (
                 <>
                   Dein Tipp: <b style={{ color: teamColor(tipped.abbreviation) }}>{tipped.abbreviation}</b>
@@ -85,8 +84,8 @@ export function GameCard({ game }: { game: GameWithDetails }) {
                     <span
                       className={
                         correct
-                          ? "ml-2 font-semibold text-green-600 dark:text-green-400"
-                          : "ml-2 font-semibold text-red-600 dark:text-red-400"
+                          ? "ml-2 font-semibold text-emerald-400"
+                          : "ml-2 font-semibold text-rose-400"
                       }
                     >
                       {correct ? "+1 Pkt" : "0 Pkt"}
@@ -99,7 +98,7 @@ export function GameCard({ game }: { game: GameWithDetails }) {
             </span>
             <Link
               href={`/game/${game.id}`}
-              className="rounded-md border border-zinc-300 px-3 py-2 text-center text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+              className="rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-2 text-center text-sm font-semibold tracking-wide text-zinc-200 hover:border-orange-500/60 hover:bg-zinc-800"
             >
               Tipps der anderen anzeigen →
             </Link>
@@ -121,19 +120,23 @@ function TeamBlock({
   isWinner: boolean;
   alignRight?: boolean;
 }) {
+  const color = teamColor(team.abbreviation);
   return (
     <div className={`flex items-center gap-3 ${alignRight ? "justify-end" : ""}`}>
-      {!alignRight && <TeamLogo abbreviation={team.abbreviation} size={36} />}
+      {!alignRight && <TeamLogo abbreviation={team.abbreviation} size={40} />}
       <div className={alignRight ? "text-right" : ""}>
-        <p className="text-base font-bold" style={{ color: teamColor(team.abbreviation) }}>
+        <p
+          className="text-base font-extrabold tracking-wide"
+          style={{ color, textShadow: `0 0 12px ${color}40` }}
+        >
           {team.abbreviation}
         </p>
         <p className="text-xs text-zinc-500 truncate">{team.full_name}</p>
         {score !== null && (
-          <p className={`text-xl font-bold ${isWinner ? "" : "text-zinc-400"}`}>{score}</p>
+          <p className={`text-2xl font-extrabold tabular-nums ${isWinner ? "text-white" : "text-zinc-500"}`}>{score}</p>
         )}
       </div>
-      {alignRight && <TeamLogo abbreviation={team.abbreviation} size={36} />}
+      {alignRight && <TeamLogo abbreviation={team.abbreviation} size={40} />}
     </div>
   );
 }
