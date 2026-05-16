@@ -57,6 +57,16 @@ export async function submitSeriesTip(formData: FormData): Promise<void> {
     .maybeSingle();
   if (existing) return;
 
+  // Series-Tipps nur vor Beginn der Serie zulassen.
+  const { data: series } = await supabase
+    .from("series")
+    .select("starts_at, status")
+    .eq("id", seriesId)
+    .single();
+  if (!series) return;
+  if (series.status === "finished") return;
+  if (series.starts_at && new Date(series.starts_at) <= new Date()) return;
+
   await supabase.from("series_tips").insert({
     user_id: user.id,
     series_id: seriesId,

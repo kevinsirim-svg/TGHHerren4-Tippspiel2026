@@ -7,7 +7,10 @@ import { SeriesTipForm } from "./SeriesTipForm";
 
 export function SeriesCard({ series }: { series: SeriesWithDetails }) {
   const isFinished = series.status === "finished";
+  // Series-Tipps nur vor dem ersten Spiel (oder solange noch kein Termin steht).
+  const seriesStarted = series.starts_at ? new Date(series.starts_at) <= new Date() : false;
   const myTip = series.my_tip;
+  const canTip = !isFinished && !seriesStarted && !myTip;
 
   const tippedTeam = myTip
     ? myTip.predicted_winner_team_id === series.team_a.id
@@ -69,7 +72,7 @@ export function SeriesCard({ series }: { series: SeriesWithDetails }) {
           </div>
         </div>
 
-        {!isFinished && !myTip && (
+        {canTip && (
           <div className="pt-1">
             <SeriesTipForm
               seriesId={series.id}
@@ -79,7 +82,7 @@ export function SeriesCard({ series }: { series: SeriesWithDetails }) {
           </div>
         )}
 
-        {(tippedTeam || isFinished) && (
+        {!canTip && (
           <div className="flex flex-col gap-2 border-t border-zinc-200 pt-2 text-sm dark:border-zinc-800">
             {tippedTeam && (
               <span className="text-zinc-600 dark:text-zinc-400">
@@ -100,6 +103,9 @@ export function SeriesCard({ series }: { series: SeriesWithDetails }) {
                   </span>
                 )}
               </span>
+            )}
+            {!tippedTeam && seriesStarted && !isFinished && (
+              <span className="italic text-zinc-500">Serie laeuft bereits - keine Tipp-Abgabe mehr moeglich.</span>
             )}
             {isFinished && winnerTeam && (
               <span className="text-zinc-600 dark:text-zinc-400">
