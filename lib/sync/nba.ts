@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchPlayoffScoreboardRange } from "@/lib/espn/client";
 import { mapEvent, type MappedGame, type SeriesConference } from "@/lib/espn/mapper";
 import { recalcAllPoints } from "./scoring";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type SyncStats = {
   events_fetched: number;
@@ -61,14 +62,12 @@ export async function syncNBA(): Promise<SyncStats> {
       continue;
     }
     if (!m.round || !m.conference) {
-      // Kein Round/Conference erkennbar - z.B. Play-In oder unbekanntes Format.
       stats.events_skipped++;
       continue;
     }
     const home_team_id = teamByAbbr.get(m.home_abbr);
     const away_team_id = teamByAbbr.get(m.away_abbr);
     if (!home_team_id || !away_team_id) {
-      // TBD = bracket placeholder fuer noch nicht entschiedene Matchups - kein Fehler.
       if (m.home_abbr !== "TBD" && m.away_abbr !== "TBD") {
         stats.errors.push(`Unknown team abbreviation: ${m.home_abbr} or ${m.away_abbr}`);
       }
@@ -84,7 +83,9 @@ export async function syncNBA(): Promise<SyncStats> {
     seriesGroups.set(key, arr);
   }
 
-  // Pro Serie: upsert series, upsert games, dann series.starts_at + winner ableiten.
+  // 1) Pro Serie aus ESPN: upsert series + upsert games + starts_at.
+  //    (Winner-Ableitung erfolgt in Schritt 2, damit auch Series ausserhalb
+  //    des ESPN-Fensters geprueft werden.)
   for (const [, games] of seriesGroups) {
     const first = games[0];
     const { mapped: m, team_a_id, team_b_id } = first;
@@ -144,38 +145,22 @@ export async function syncNBA(): Promise<SyncStats> {
       if (!earliestTipOff || g.mapped.tip_off < earliestTipOff) earliestTipOff = g.mapped.tip_off;
     }
 
-    // Series winner aus tatsaechlichen Spielergebnissen ableiten (4 Siege = Serie gewonnen).
-    const { data: finalGames } = await supabase
-      .from("games")
-      .select("winner_team_id")
-      .eq("series_id", seriesId)
-      .eq("status", "final");
-
-    const updates: Record<string, unknown> = {};
-    if (earliestTipOff) updates.starts_at = earliestTipOff;
-
-    if (finalGames && finalGames.length > 0) {
-      const wins = new Map<number, number>();
-      for (const fg of finalGames) {
-        if (fg.winner_team_id) wins.set(fg.winner_team_id, (wins.get(fg.winner_team_id) ?? 0) + 1);
-      }
-      const totalGames = Array.from(wins.values()).reduce((a, b) => a + b, 0);
-      let winner: number | null = null;
-      for (const [teamId, w] of wins) {
-        if (w >= 4) winner = teamId;
-      }
-      if (winner) {
-        updates.winner_team_id = winner;
-        updates.games_played = totalGames;
-        updates.status = "finished";
-        stats.series_finished++;
-      } else {
-        updates.status = "live";
-      }
+    if (earliestTipOff) {
+      await supabase.from("series").update({ starts_at: earliestTipOff }).eq("id", seriesId);
     }
+  }
 
-    if (Object.keys(updates).length > 0) {
-      await supabase.from("series").update(updates).eq("id", seriesId);
+  // 2) ALLE noch nicht abgeschlossenen Serien re-evaluieren - unabhaengig vom ESPN-Fenster.
+  //    Das deckt Serien ab, deren Spiele aelter sind als unsere Lookback-Range.
+  const { data: openSeries } = await supabase
+    .from("series")
+    .select("id")
+    .neq("status", "finished");
+
+  if (openSeries) {
+    for (const s of openSeries) {
+      const finished = await evaluateSeriesWinner(supabase, s.id);
+      if (finished) stats.series_finished++;
     }
   }
 
@@ -183,4 +168,40 @@ export async function syncNBA(): Promise<SyncStats> {
   await recalcAllPoints(supabase);
 
   return stats;
+}
+
+/**
+ * Wertet die finalen Spiele einer Serie aus.
+ * - 4 Siege -> series.status = 'finished' + winner + games_played
+ * - sonst, wenn schon finale Spiele -> series.status = 'live'
+ * Returns true, wenn die Serie als finished markiert wurde.
+ */
+async function evaluateSeriesWinner(supabase: SupabaseClient, seriesId: string): Promise<boolean> {
+  const { data: finalGames } = await supabase
+    .from("games")
+    .select("winner_team_id")
+    .eq("series_id", seriesId)
+    .eq("status", "final");
+
+  if (!finalGames || finalGames.length === 0) return false;
+
+  const wins = new Map<number, number>();
+  for (const fg of finalGames) {
+    if (fg.winner_team_id) wins.set(fg.winner_team_id, (wins.get(fg.winner_team_id) ?? 0) + 1);
+  }
+  const totalGames = Array.from(wins.values()).reduce((a, b) => a + b, 0);
+  let winner: number | null = null;
+  for (const [teamId, w] of wins) {
+    if (w >= 4) winner = teamId;
+  }
+
+  if (winner) {
+    await supabase
+      .from("series")
+      .update({ winner_team_id: winner, games_played: totalGames, status: "finished" })
+      .eq("id", seriesId);
+    return true;
+  }
+  await supabase.from("series").update({ status: "live" }).eq("id", seriesId);
+  return false;
 }
