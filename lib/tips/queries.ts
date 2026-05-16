@@ -49,12 +49,20 @@ export async function getUpcomingAndRecentGames(userId: string): Promise<GameWit
 
   const seriesIds = Array.from(new Set(games.map((g) => g.series_id).filter((id): id is string => !!id)));
   const { data: seriesData } = seriesIds.length
-    ? await supabase.from("series").select("id, round, conference").in("id", seriesIds)
+    ? await supabase.from("series").select("id, round, conference, status").in("id", seriesIds)
     : { data: [] };
-  const seriesById = new Map<string, { round: number; conference: SeriesConference }>();
-  for (const s of seriesData ?? []) seriesById.set(s.id, { round: s.round, conference: s.conference });
+  const seriesById = new Map<string, { round: number; conference: SeriesConference; status: string }>();
+  for (const s of seriesData ?? []) seriesById.set(s.id, { round: s.round, conference: s.conference, status: s.status });
 
-  const gameIds = games.map((g) => g.id);
+  // Spiele aus bereits entschiedenen Serien rausfiltern (z.B. Game 5-7
+  // die bei einem Sweep nie stattfinden, aber im ESPN-Plan stehen).
+  const relevantGames = games.filter((g) => {
+    if (!g.series_id) return true;
+    const series = seriesById.get(g.series_id);
+    return !series || series.status !== "finished";
+  });
+
+  const gameIds = relevantGames.map((g) => g.id);
   const { data: myTips } = gameIds.length
     ? await supabase
         .from("game_tips")
@@ -64,7 +72,7 @@ export async function getUpcomingAndRecentGames(userId: string): Promise<GameWit
     : { data: [] };
   const myTipsByGame = new Map((myTips ?? []).map((t) => [t.game_id, t]));
 
-  return games.map((g) => {
+  return relevantGames.map((g) => {
     const series = g.series_id ? seriesById.get(g.series_id) : null;
     return {
       ...(g as Game),
