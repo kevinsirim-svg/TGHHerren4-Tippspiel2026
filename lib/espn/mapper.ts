@@ -48,6 +48,7 @@ function parseRoundFromNotes(notes: EspnNote[]): { round: 1 | 2 | 3 | 4 | null; 
     const h = (n.headline ?? "").trim();
     if (!h) continue;
 
+    // Round 4 (NBA Finals) - "NBA Finals - Game 1" etc.
     if (/NBA Finals/i.test(h)) {
       return { round: 4, conference: "Finals" };
     }
@@ -55,7 +56,11 @@ function parseRoundFromNotes(notes: EspnNote[]): { round: 1 | 2 | 3 | 4 | null; 
     const isWest = /\bWest\b/i.test(h);
     const conf: SeriesConference | null = isEast ? "East" : isWest ? "West" : null;
 
-    if (/(Conf(?:erence)?\s*Finals)/i.test(h)) return { round: 3, conference: conf };
+    // Round 3 (Conf Finals) - ESPN nutzt aktuell "East Finals - Game 1" /
+    // "West Finals - Game 1". Frueher auch "Conf Finals" / "Conference Finals".
+    if (/(Conf(?:erence)?\s*Finals|(?:East|West)\s+Finals)/i.test(h)) {
+      return { round: 3, conference: conf };
+    }
     if (/Semifinals|Semis/i.test(h)) return { round: 2, conference: conf };
     if (/1st Round|First Round/i.test(h)) return { round: 1, conference: conf };
   }
